@@ -102,6 +102,7 @@ local Esps = {
 }
 
 local Light = nil
+local lightBrick = nil
 local Brightness = 1
 local Range = 10
 
@@ -125,9 +126,10 @@ function HeadLamp(action, Value)
             newLight.Brightness = Brightness
             newLight.Range = Range
 
-            Light = lightPart
+            lightBrick = lightPart
+            Light = newLight
         elseif not values.Toggles.HeadLamp and Light ~= nil then
-            Light:Destroy(); Light = nil
+            lightBrick:Destroy(); Light = nil
         end
     elseif action == "Brightness" then
         if Light ~= nil then Light.Brightness = Value end
@@ -341,8 +343,8 @@ game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
     EspToggle(values.Toggles.VentEsp, values.Highlights.VentChams, Esps.ventEsp)
     EspToggle(values.Toggles.bookEsp, values.Highlights.VentChams, Esps.bookEsp)
 
-    if not Light then return end
-    Light.CFrame = workspace.CurrentCamera.CFrame
+    if not lightBrick then return end
+    lightBrick.CFrame = workspace.CurrentCamera.CFrame
 end)
 
 Rooms.ChildAdded:Connect(function(child)
@@ -350,4 +352,4 @@ Rooms.ChildAdded:Connect(function(child)
     CheckBoolAttributes(true)
 end)
 
-print("Aplha 0.2 HeadLamp")
+print("Aplha 0.2 HeadLamp 2")
