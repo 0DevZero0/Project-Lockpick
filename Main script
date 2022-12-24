@@ -117,11 +117,15 @@ local multiCheck = {
 function HeadLamp(action, Value)
     if action == "Toggle" then
         if values.Toggles.HeadLamp and Light == nil then
+            local lightPart = Instance.new("Part", workspace.CurrentCamera)
+            lightPart.Transparency = 1
+            lightPart.Size = Vector3.new(1,1,1)
+
             local newLight = Instance.new("SpotLight", workspace.CurrentCamera)
             newLight.Brightness = Brightness
             newLight.Range = Range
 
-            Light = newLight
+            Light = lightPart
         elseif not values.Toggles.HeadLamp and Light ~= nil then
             Light:Destroy(); Light = nil
         end
@@ -138,7 +142,6 @@ function CheckNextRoom(Room)
     multiCheck.RoomAttribues = {}
     for i, v in pairs(Room:GetAttributes()) do
         table.insert(multiCheck.RoomAttribues, {i, v})
-        print(i)
     end
 end
 
@@ -337,6 +340,9 @@ game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
     EspToggle(values.Toggles.LeverEsp, values.Highlights.LeverAndGateChams, Esps.leverAndGateEsp)
     EspToggle(values.Toggles.VentEsp, values.Highlights.VentChams, Esps.ventEsp)
     EspToggle(values.Toggles.bookEsp, values.Highlights.VentChams, Esps.bookEsp)
+
+    if not Light then return end
+    Light.CFrame = workspace.CurrentCamera.CFrame
 end)
 
 Rooms.ChildAdded:Connect(function(child)
@@ -344,4 +350,4 @@ Rooms.ChildAdded:Connect(function(child)
     CheckBoolAttributes(true)
 end)
 
-print("Aplha 0.2")
+print("Aplha 0.2 HeadLamp")
