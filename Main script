@@ -1,0 +1,347 @@
+local player = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+if not game:IsLoaded() then game.Loaded:Wait() end
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/0DevZero0/OmenLibrary/main/Omen%20source"))(); library.Create("Project lockpick")
+if game.PlaceId == 6516141723 then library.Notify("Attention:", "Join a game before injecting!", 7.5) library.ActiveToggle() end
+
+-- Important variables
+
+local Rooms = Workspace:WaitForChild("CurrentRooms")
+local gameData = game:GetService("ReplicatedStorage"):WaitForChild("GameData")
+
+local values = {
+    Toggles = {
+        KeyEsp = false,
+        DoorEsp = false,
+        VentEsp = false,
+        LeverEsp = false,
+        EntityEsp = false,
+        bookEsp = false,
+
+        HeadLamp = false,
+        FullBright = false,
+
+        nextDark = false,
+        nextLocked = false
+    },
+    Numbers = {},
+    Debounces = {},
+    Highlights = {
+        KChams = {},
+        DoorChams = {},
+        VentChams = {},
+        BookChams = {},
+        LeverAndGateChams = {},
+        EntityChams = {}
+    },
+    Temp = {}
+}
+
+local itemNames = {"Bandage", "Lighter", "Lockpick", "Vitamins", "Flashlight"}
+
+-- Functions
+
+local Esps = {
+    keyEsp = function()
+        for i, v in pairs(Rooms:GetDescendants()) do
+            if v.Name == "KeyObtain" and not v:FindFirstChild("KeyHighlight") then
+                local highlight = DrawVisuals("Chams", v, "KeyHighlight", nil, Color3.fromRGB(255, 255, 255))
+                table.insert(values.Highlights.KChams, highlight)
+            end
+        end
+    end,
+
+    doorEsp = function()
+        for i, v in pairs(Rooms:GetChildren()) do
+            local Door = v:FindFirstChild("Door")
+            if Door then
+                local Main = Door:FindFirstChild("Door")
+                if Main and not Main:FindFirstChild("DoorEsp") then
+                    local chams = DrawVisuals("Wire", Main, "DoorEsp", Enum.NormalId.Back, Color3.fromRGB(255, 255, 255))
+                    table.insert(values.Highlights.DoorChams, chams)
+                end
+            end
+        end
+    end,
+
+    leverAndGateEsp = function()
+        for i, v in pairs(Rooms:GetDescendants()) do
+            if v.Name == "Gate" then
+                local GatePart = v:FindFirstChild("ThingToOpen")
+                if GatePart and not GatePart:FindFirstChild("GateEsp") then
+                    local chams = DrawVisuals("Wire", GatePart, "GateEsp", Enum.NormalId.Back, Color3.fromRGB(255, 42, 42))
+                    table.insert(values.Highlights.LeverAndGateChams, chams)
+                end
+            end
+            if v.Name == "LeverForGate" and not v:FindFirstChild("LeverEsp") then
+                local chams = DrawVisuals("Chams", v, "LeverEsp", Enum.NormalId.Back, Color3.fromRGB(255, 42, 42))
+                table.insert(values.Highlights.LeverAndGateChams, chams)
+            end
+        end
+    end,
+
+    ventEsp = function()
+        for i, v in pairs(Rooms:GetDescendants()) do
+            if v.Name == "SquareGrate" and not v:FindFirstChild("VentEsp") then
+                local highlight, highlight2 = DrawVisuals("Wire", v, "VentEsp", Enum.NormalId.Back, Color3.fromRGB(122, 122, 122)), DrawVisuals("Wire", v, "VentEsp", Enum.NormalId.Front, Color3.fromRGB(122, 122, 122))
+                table.insert(values.Highlights.KChams, highlight); table.insert(values.Highlights.KChams, highlight2)
+            end
+        end
+    end,
+
+    bookEsp = function()
+        for i, v in pairs(Rooms:GetDescendants()) do
+            if v.Name == "LiveHintBook" and not v:FindFirstChild("BookEsp") then
+                local highlight = DrawVisuals("Chams", v, "BookEsp", nil, Color3.fromRGB(173, 255, 126))
+                table.insert(values.Highlights.BookChams, highlight)
+            end
+        end
+    end
+}
+
+local Light = nil
+local Brightness = 1
+local Range = 10
+
+local multiCheck = {
+    RoomAttribues = {},
+    attributeText = {
+        ["RequiresKey"] = "is locked",
+        ["IsDark"] = "is dark"
+    },
+    toCheck = {}
+}
+
+function HeadLamp(action, Value)
+    if action == "Toggle" then
+        if values.Toggles.HeadLamp and Light == nil then
+            local newLight = Instance.new("SpotLight", player.Character:FindFirstChild("Head"))
+            newLight.Brightness = Brightness
+            newLight.Range = Range
+
+            Light = newLight
+        elseif not values.Toggles.HeadLamp and Light ~= nil then
+            Light:Destroy(); Light = nil
+        end
+    elseif action == "Brightness" then
+        if Light ~= nil then Light.Brightness = Value end
+        Brightness = Value
+    elseif action == "Range" then
+        if Light ~= nil then Light.Range = Value end
+        Range = Value
+    end
+end
+
+function CheckNextRoom(Room)
+    multiCheck.RoomAttribues = {}
+    for i, v in pairs(Room:GetAttributes()) do
+        table.insert(multiCheck.RoomAttribues, {i, v})
+        print(i)
+    end
+end
+
+function CheckBoolAttributes(boolType)
+    local flagged = {}
+    for i, v in pairs(multiCheck.RoomAttribues) do
+        if table.find(multiCheck.toCheck, v[1]) and v[2] == boolType then
+            table.insert(flagged, v)
+        end
+    end
+    if #flagged > 0 then
+        local combString = "The next room, "
+        for i, v in (flagged) do
+            local prefix = multiCheck.attributeText[v[1]]
+            if not prefix then continue end
+            if i == #flagged then
+                combString = combString .. prefix .. "."
+            elseif #flagged > 1 and i == #flagged - 1 then
+                combString = combString .. prefix .. "and "
+            else
+                combString = combString .. prefix .. ", "
+            end
+        end
+        library.Notify("Attention", combString)
+    end
+end
+
+function WireChams(Obj, Name, face, Color)
+    local SurfaceGui = Instance.new("SurfaceGui")
+    SurfaceGui.Name = Name
+    SurfaceGui.Face = face
+    SurfaceGui.Parent = Obj
+    SurfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    SurfaceGui.AlwaysOnTop = true
+    SurfaceGui.LightInfluence = 1.000
+
+    local Main = Instance.new("Frame")
+    Main.Name = "Main"
+    Main.Parent = SurfaceGui
+    Main.AnchorPoint = Vector2.new(0.5, 0.5)
+    Main.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Main.BackgroundTransparency = 1.000
+    Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Main.Size = UDim2.new(1, 0, 1, 0)
+
+    local Border = Instance.new("Frame")
+    Border.Name = "Border"
+    Border.Parent = Main
+    Border.AnchorPoint = Vector2.new(0.5, 0.5)
+    Border.BackgroundColor3 = Color
+    Border.BorderSizePixel = 0
+    Border.Position = UDim2.new(1, 0, 0.5, 0)
+    Border.Size = UDim2.new(0, 5, 1, 0)
+
+    local Border_2 = Instance.new("Frame")
+    Border_2.Name = "Border"
+    Border_2.Parent = Main
+    Border_2.AnchorPoint = Vector2.new(0.5, 0.5)
+    Border_2.BackgroundColor3 = Color
+    Border_2.BorderSizePixel = 0
+    Border_2.Position = UDim2.new(0.5, 0, 0, 0)
+    Border_2.Size = UDim2.new(1, 0, 0, 5)
+
+    local Border_3 = Instance.new("Frame")
+    Border_3.Name = "Border"
+    Border_3.Parent = Main
+    Border_3.AnchorPoint = Vector2.new(0.5, 0.5)
+    Border_3.BackgroundColor3 = Color
+    Border_3.BorderSizePixel = 0
+    Border_3.Position = UDim2.new(0, 0, 0.5, 0)
+    Border_3.Size = UDim2.new(0, 5, 1, 0)
+
+    local Border_4 = Instance.new("Frame")
+    Border_4.Name = "Border"
+    Border_4.Parent = Main
+    Border_4.AnchorPoint = Vector2.new(0.5, 0.5)
+    Border_4.BackgroundColor3 = Color
+    Border_4.BorderSizePixel = 0
+    Border_4.Position = UDim2.new(0.499365896, 0, 0.990588188, 0)
+    Border_4.Size = UDim2.new(1, 0, 0, 5)
+
+    return SurfaceGui
+end
+
+function DrawVisuals(Type, Obj, Name, face, Color)
+    if Type == "Chams" then
+        local higlight = Instance.new("Highlight")
+        higlight.Name = Name
+        higlight.OutlineColor = Color
+        higlight.FillTransparency = 0.75
+        higlight.Parent = Obj
+
+        return higlight
+    elseif Type == "Wire" then
+       local gui = WireChams(Obj, Name, face, Color)
+       return gui
+    end
+end
+
+function EspToggle(Value, Esps, TypeFunction)
+    if Value then
+        TypeFunction()
+    elseif #Esps > 0 then
+        for i, v in pairs(Esps) do
+            v:Destroy()
+        end
+    end
+end
+
+function CheckTwoToggles(Value1, Value2, Name1, Name2)
+    if Value1 and Value2 then
+        local string = (Name1 .. " and " .. Name2 .. " are not recommended to be on together.")
+        library.Notify("Recommendation:", string, 5)
+    end
+end
+
+-- Menu items
+local Visuals = library:NewCategory("Visuals", "Visuals", "Esp for items and objects")
+local VisualItems = {
+    ObjTitle = library.Divider("TitleEsp", "Item and object esp"),
+    keyEsp = library.Toggle("KeyEsp", "Key ESP", nil, function()
+        values.Toggles.KeyEsp = not values.Toggles.KeyEsp
+    end),
+    DoorEsp = library.Toggle("DoorEsp", "Door ESP", nil, function()
+        values.Toggles.DoorEsp = not values.Toggles.DoorEsp
+    end),
+    VentEsp = library.Toggle("VentEsp", "Vent ESP", nil, function()
+        values.Toggles.VentEsp = not values.Toggles.VentEsp
+    end),
+    LeverAndGateEsp = library.Toggle("LeverAndGateEsp", "Lever esp", nil, function()
+        values.Toggles.LeverEsp = not values.Toggles.LeverEsp
+    end),
+    bookEsp = library.Toggle("BookEsp", "Book esp", "Useful on door 50", function()
+        values.Toggles.bookEsp = not values.Toggles.bookEsp
+    end),
+
+    VisualTitle = library.Divider("Visual", "Lighting and visual"),
+    HeadLamp = library.Toggle("HeadLamp", "Head lamp", "Directional light", function()
+        values.Toggles.HeadLamp = not values.Toggles.HeadLamp
+        HeadLamp("Toggle")
+        CheckTwoToggles(values.Toggles.HeadLamp, values.Toggles.FullBright, "Head lamp", "Full bright")
+    end),
+    HeadLampBrightness = library.Slider("Brightness", "Brightness", 1, 40, "Brightness of the lamp", function(Value)
+        HeadLamp("Brightness", Value)
+    end),
+    HeadLampRange = library.Slider("Range", "Range", 30, 60, "Range of the lamp", function(Value)
+        HeadLamp("Range", Value)
+    end),
+    FullBright = library.Toggle("FullBright", "Full Bright", "Everything is lit up", function()
+        values.Toggles.FullBright = not values.Toggles.FullBright
+        CheckTwoToggles(values.Toggles.HeadLamp, values.Toggles.FullBright, "Full bright", "Head lamp")
+    end)
+}
+
+local movement = library:NewCategory("Movement", "Movement", "Movement")
+local movementItems = {
+    speed = library.Slider("Speed", "Speed", 0, 30, "Walkspeed", function(Number)
+        player.Character.Humanoid:SetAttribute("SpeedBoost", Number)
+    end)
+}
+
+local Warnings = library:NewCategory("Warnings", "Warnings", "Warns the player of events")
+local WarningItems = {
+    nextLocked = library.Toggle("nextLocked", "Next room is Locked", "Notifies if the next room is locked", function()
+        values.Toggles.nextLocked = not values.Toggles.nextLocked
+        if values.Toggles.nextLocked then
+            table.insert(multiCheck.toCheck, "RequiresKey")
+        elseif not values.Toggles.nextLocked then
+            local toRemove = table.find(multiCheck.toCheck, "RequiresKey")
+            if toRemove then table.remove(multiCheck.toCheck, toRemove) end
+        end
+    end),
+    nextDark = library.Toggle("nextDark", "Next room is dark", "Notifies if the next room is dark", function()
+        values.Toggles.nextDark = not values.Toggles.nextDark
+        if values.Toggles.nextDark then
+            table.insert(multiCheck.toCheck, "IsDark")
+        elseif not values.Toggles.nextDark then
+            local toRemove = table.find(multiCheck.toCheck, "IsDark")
+            if toRemove then table.remove(multiCheck.toCheck, toRemove) end
+        end
+    end)
+}
+
+UIS.InputBegan:Connect(function(input, gameProcessedEvent)
+    if gameProcessedEvent then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        library.ActiveToggle()
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
+    UIS.MouseIconEnabled = true
+
+    EspToggle(values.Toggles.KeyEsp, values.Highlights.KChams, Esps.keyEsp)
+    EspToggle(values.Toggles.DoorEsp, values.Highlights.DoorChams, Esps.doorEsp)
+    EspToggle(values.Toggles.LeverEsp, values.Highlights.LeverAndGateChams, Esps.leverAndGateEsp)
+    EspToggle(values.Toggles.VentEsp, values.Highlights.VentChams, Esps.ventEsp)
+    EspToggle(values.Toggles.bookEsp, values.Highlights.VentChams, Esps.bookEsp)
+end)
+
+Rooms.ChildAdded:Connect(function(child)
+    CheckNextRoom(child)
+    CheckBoolAttributes(true)
+end)
+
+print("Aplha 0.1")
