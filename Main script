@@ -117,7 +117,7 @@ local multiCheck = {
 function HeadLamp(action, Value)
     if action == "Toggle" then
         if values.Toggles.HeadLamp and Light == nil then
-            local newLight = Instance.new("SpotLight", player.Character:FindFirstChild("Head"))
+            local newLight = Instance.new("SpotLight", workspace.CurrentCamera)
             newLight.Brightness = Brightness
             newLight.Range = Range
 
@@ -344,4 +344,4 @@ Rooms.ChildAdded:Connect(function(child)
     CheckBoolAttributes(true)
 end)
 
-print("Aplha 0.1")
+print("Aplha 0.2")
