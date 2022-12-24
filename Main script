@@ -102,7 +102,6 @@ local Esps = {
 }
 
 local Light = nil
-local lightBrick = nil
 local Brightness = 1
 local Range = 10
 
@@ -118,18 +117,13 @@ local multiCheck = {
 function HeadLamp(action, Value)
     if action == "Toggle" then
         if values.Toggles.HeadLamp and Light == nil then
-            local lightPart = Instance.new("Part", workspace.CurrentCamera)
-            lightPart.Transparency = 1
-            lightPart.Size = Vector3.new(1,1,1)
-
             local newLight = Instance.new("SpotLight", workspace.CurrentCamera)
             newLight.Brightness = Brightness
             newLight.Range = Range
 
-            lightBrick = lightPart
             Light = newLight
         elseif not values.Toggles.HeadLamp and Light ~= nil then
-            lightBrick:Destroy(); Light = nil
+            Light:Destroy(); Light = nil
         end
     elseif action == "Brightness" then
         if Light ~= nil then Light.Brightness = Value end
@@ -342,9 +336,6 @@ game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
     EspToggle(values.Toggles.LeverEsp, values.Highlights.LeverAndGateChams, Esps.leverAndGateEsp)
     EspToggle(values.Toggles.VentEsp, values.Highlights.VentChams, Esps.ventEsp)
     EspToggle(values.Toggles.bookEsp, values.Highlights.VentChams, Esps.bookEsp)
-
-    if not lightBrick then return end
-    lightBrick.CFrame = workspace.CurrentCamera.CFrame
 end)
 
 Rooms.ChildAdded:Connect(function(child)
@@ -352,4 +343,4 @@ Rooms.ChildAdded:Connect(function(child)
     CheckBoolAttributes(true)
 end)
 
-print("Aplha 0.2 HeadLamp 2")
+print("Aplha 0.2 hl bad")
