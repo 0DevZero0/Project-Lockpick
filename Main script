@@ -1,5 +1,3 @@
-local webHook = "https://hooks.hyra.io/api/webhooks/1056916471088951356/HYhybZvyth13-5WSz26QNkKkLbzIz5O6S1C_0l1cvbxoGrknez0yKvgLEHYf2Fy3MOS5"
-
 local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
@@ -324,60 +322,6 @@ local WarningItems = {
     end)
 }
 
-local debugging = library:NewCategory("Debugging", "Debugging", "Helps the dev debug and gain feedback")
-local debugItems = {
-    feedback = library.TextInput("Feedback", "Feedback", "Send info to the dev on a issue", function(text)
-        local togglesText = ""
-        local chamsText = ""
-
-        for i, v in pairs(values.Toggles) do
-            togglesText = togglesText .. tostring(i) .. " : " .. tostring(v) .. "\n"
-        end
-        for i, v in pairs(values.Highlights) do
-            chamsText = chamsText .. tostring(i) .. " : " .. tostring(#v) .. "\n"
-        end
-
-        local data = {
-            ["embeds"] = {{
-    
-                ["author"] = {
-                    ["name"] = "Omen",
-                    ["icon_url"] = "https://cdn.discordapp.com/attachments/814680466417778722/1056918267899433061/Pfp2.png"
-                },
-                ["description"] = "Issue: " .. text,
-                ["color"] = tonumber(0x832D2D),
-                ["fields"] = {
-                    {
-                        ["name"] = "Active toggles",
-                        ["value"] = togglesText,
-                        ["inline"] = true
-                    },
-                    {
-                        ["name"] = "# of esps",
-                        ["value"] = chamsText,
-                        ["inline"] = true
-                    }
-                }
-            }},
-    
-        }
-
-        local encodedData = game:GetService("HttpService"):JSONEncode(data)
-
-        local Response = syn.request({
-            Url = "https://discord.com/api/webhooks/1056916471088951356/HYhybZvyth13-5WSz26QNkKkLbzIz5O6S1C_0l1cvbxoGrknez0yKvgLEHYf2Fy3MOS5",
-            Method = "POST",
-            Body = encodedData,
-            Headers = {
-                ['Content-Type'] = 'application/json'
-            }
-        })
-        for _, v in next, Response do
-            print(_, v)
-        end
-    end),
-}
-
 UIS.InputBegan:Connect(function(input, gameProcessedEvent)
     if input.KeyCode == Enum.KeyCode.RightShift then
         local success, error = pcall(function()
@@ -401,4 +345,4 @@ Rooms.ChildAdded:Connect(function(child)
     CheckBoolAttributes(true)
 end)
 
-print("Aplha 0.5")
+print("Aplha 0.4")
